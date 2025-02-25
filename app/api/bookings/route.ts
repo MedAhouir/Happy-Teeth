@@ -17,6 +17,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ message: "Booking saved successfully!" }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("Booking API Error:", error); // Logs the error to the console
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Server error" }, { status: 500 });
   }
+  
 }

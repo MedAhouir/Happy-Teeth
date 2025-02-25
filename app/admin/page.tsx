@@ -31,6 +31,7 @@ const LoginForm = () => {
         setError(result.message || "Login failed");
       }
     } catch (error) {
+      console.log(error);
       setError("An error occurred. Please try again.");
     }
   };

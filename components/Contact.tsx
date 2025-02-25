@@ -90,10 +90,12 @@ const Contact = () => {
           setAlertMessage(result.error || "Booking failed! Please try again.");
         }
       } catch (error) {
+        console.error("Booking Error:", error); // Logs the error to the console
         setIsSending(false);
         setIsSuccess(false);
         setAlertMessage("Server error! Please try again later.");
       }
+      
     }
   };
 

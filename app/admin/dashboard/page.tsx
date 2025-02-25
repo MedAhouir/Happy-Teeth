@@ -11,7 +11,7 @@ const Home = () => {
     if (!isAdminAuthenticated()) {
       router.push("/admin");
     }
-  }, []);
+  },);
 
   return (
     <div className="p-8">
