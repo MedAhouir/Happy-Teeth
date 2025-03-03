@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -11,11 +11,19 @@ import {
 } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
 
+type Appointment = {
+  _id: string;
+  name: string;
+  phone: string;
+  date: string;
+  tooth: string;
+  status: "Pending" | "Confirmed" | "Cancelled";
+};
+
 export function TableDemo() {
-  const [appointments, setAppointments] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -24,7 +32,7 @@ export function TableDemo() {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         });
-        const data = await res.json();
+        const data: Appointment[] = await res.json();
         setAppointments(data);
       } catch (error) {
         console.error("Error fetching appointments:", error);
@@ -36,8 +44,8 @@ export function TableDemo() {
     fetchAppointments();
   }, []);
 
-  const updateAppointmentStatus = async (id: string, status: string) => {
-    setUpdatingId(id); // Show loading for this appointment
+  const updateAppointmentStatus = async (id: string, status: Appointment["status"]) => {
+    setUpdatingId(id);
     try {
       const res = await fetch(`/api/bookings/${id}`, {
         method: "PATCH",
@@ -47,7 +55,6 @@ export function TableDemo() {
 
       if (!res.ok) throw new Error("Failed to update status");
 
-      // Update local state after successful API response
       setAppointments((prev) =>
         prev.map((appointment) =>
           appointment._id === id ? { ...appointment, status } : appointment
@@ -56,17 +63,12 @@ export function TableDemo() {
     } catch (error) {
       console.error("Error updating appointment:", error);
     } finally {
-      setUpdatingId(null); // Remove loading state
+      setUpdatingId(null);
     }
   };
 
-  const handleConfirmation = (id: string) => {
-    updateAppointmentStatus(id, "Confirmed");
-  };
-
-  const handleCancellation = (id: string) => {
-    updateAppointmentStatus(id, "Cancelled");
-  };
+  const handleConfirmation = (id: string) => updateAppointmentStatus(id, "Confirmed");
+  const handleCancellation = (id: string) => updateAppointmentStatus(id, "Cancelled");
 
   if (loading) {
     return (
@@ -86,7 +88,7 @@ export function TableDemo() {
           <TableHead>Date</TableHead>
           <TableHead>Tooth</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead className='w-[200px] text-center'>Actions</TableHead>
+          <TableHead className="w-[200px] text-center">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -108,26 +110,27 @@ export function TableDemo() {
               {appointment.status}
             </TableCell>
             {appointment.status === "Pending" && (
-              <TableCell className='w-[200px] text-center'>
-                {updatingId === appointment._id ? <Loader2 className="mx-auto animate-spin text-gray-500" /> : <>
-                
-                <button
-                  onClick={() => handleConfirmation(appointment._id)}
-                  className="h-10 px-3 mx-2 py-1 text-sm text-white bg-green-500 rounded-3xl hover:bg-green-700 transition-all duration-500"
-                  disabled={updatingId === appointment._id}
-                >
-                  Confirm
-                </button>
-                <button
-                  onClick={() => handleCancellation(appointment._id)}
-                  className="h-10 px-3 mx-2 py-1 text-sm text-white bg-red-500 rounded-3xl hover:bg-red-700 transition-all duration-500"
-                  disabled={updatingId === appointment._id}
-                >
-                  Cancel
-                </button>
-                </> 
-                }
-                
+              <TableCell className="w-[200px] text-center">
+                {updatingId === appointment._id ? (
+                  <Loader2 className="mx-auto animate-spin text-gray-500" />
+                ) : (
+                  <>
+                    <button
+                      onClick={() => handleConfirmation(appointment._id)}
+                      className="h-10 px-3 mx-2 py-1 text-sm text-white bg-green-500 rounded-3xl hover:bg-green-700 transition-all duration-500"
+                      disabled={updatingId === appointment._id}
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      onClick={() => handleCancellation(appointment._id)}
+                      className="h-10 px-3 mx-2 py-1 text-sm text-white bg-red-500 rounded-3xl hover:bg-red-700 transition-all duration-500"
+                      disabled={updatingId === appointment._id}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                )}
               </TableCell>
             )}
           </TableRow>
