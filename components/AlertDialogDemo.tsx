@@ -1,3 +1,5 @@
+import Checkmark from "./Checkmark";
+import WrongMark from "./Wrongmark";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -18,7 +20,8 @@ import {
       <AlertDialog open={isSuccess !== null} onOpenChange={onClose}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className={isSuccess ? "text-green-600" : "text-red-600"}>
+            <AlertDialogTitle className={`flex flex-col items-center gap-2 ${isSuccess ? "text-green-600" : "text-red-600"}`}>
+              {isSuccess ? <Checkmark /> : <WrongMark/> }
               {message}
             </AlertDialogTitle>
           </AlertDialogHeader>

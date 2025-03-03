@@ -22,3 +22,15 @@ export async function POST(req: Request) {
   }
   
 }
+
+export async function GET() {
+  try {
+    await connectToDB();
+    const bookings = await Booking.find();
+    return NextResponse.json(bookings);
+  } catch (error) {
+    console.error("Booking API Error:", error); // Logs the error to the console
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Server error" }, { status: 500 });
+  }
+}
+

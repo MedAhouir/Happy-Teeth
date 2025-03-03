@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 
     const isPasswordValid = await bcrypt.compare(password, admin.password);
     if (!isPasswordValid) {
-      return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });
+      return NextResponse.json({ message: "Email or password is incorrect" }, { status: 401 });
     }
 
     const token = jwt.sign({ id: admin._id }, JWT_SECRET, { expiresIn: "1d" });

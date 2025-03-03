@@ -95,17 +95,16 @@ const Contact = () => {
         setIsSuccess(false);
         setAlertMessage("Server error! Please try again later.");
       }
-      
     }
   };
 
   return (
-    <section id="contact" className="relative py-20 px-6 text-lg">
+    <section id="contact" className="relative px-4 sm:px-8 lg:px-12 py-8 my-10 text-lg">
       <h1 className="text-6xl lg:text-7xl font-semibold font-mulish leading-tight">
         Book Online <br />
         Now <span className="text-green-500">.</span>
       </h1>
-      <div className="max-w-5xl mx-auto mt-5 flex flex-col-reverse lg:flex-row items-center justify-between gap-10">
+      <div className="max-w-5xl mx-auto mt-5 flex flex-col-reverse lg:flex-row items-center justify-between gap-2">
         {/* Left Section */}
         <div className="w-full lg:w-1/2 flex flex-col gap-10">
           <form className="bg-white shadow-lg rounded-3xl p-8" onSubmit={handleSubmit}>
@@ -198,9 +197,11 @@ const Contact = () => {
               {/* Submit Button */}
               <div className="mt-6">
                 <Button
-                  type="submit"
+                  text="Book Now"
                   isSending={isSending}
-                  className="bg-black text-white w-full py-3 text-lg rounded-xl hover:bg-green-500 hover:text-black transition"
+                  className={`bg-black text-white w-full py-3 text-lg rounded-xl ${
+                    !isSending ? "hover:bg-green-500 hover:text-black" : ""
+                  } transition`}
                 />
               </div>
             </div>
