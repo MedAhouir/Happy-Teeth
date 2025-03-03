@@ -15,7 +15,7 @@ export function TableDemo() {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [updatingType, setUpdatingType] = useState("") 
+  
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -62,12 +62,10 @@ export function TableDemo() {
 
   const handleConfirmation = (id: string) => {
     updateAppointmentStatus(id, "Confirmed");
-    setUpdatingType("Confirmation")
   };
 
   const handleCancellation = (id: string) => {
     updateAppointmentStatus(id, "Cancelled");
-    setUpdatingType("Cancellation")
   };
 
   if (loading) {

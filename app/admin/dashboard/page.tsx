@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/auth";
-import { TableDemo } from "@/components/TableDemo";
 import { SidebarDemo } from "@/components/SidebarDemo";
 
 const Home = () => {
