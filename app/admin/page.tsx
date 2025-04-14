@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { isAdminAuthenticated } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import Rapper from "@/components/Rapper";
 import Image from "next/image";
@@ -17,6 +18,12 @@ const LoginForm = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true); // Start loading
+
+    useEffect(() => {
+        if (isAdminAuthenticated()) {
+          router.push("/admin/dashboard");
+        }
+      },);
 
     try {
       const res = await fetch("/api/login", {
