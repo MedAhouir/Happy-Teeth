@@ -9,22 +9,23 @@ import { FaTooth } from "react-icons/fa6";
 import Link from "next/link";
 
 const LoginForm = () => {
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false); // Add loading state
   const router = useRouter();
 
+  useEffect(() => {
+    if (isAdminAuthenticated()) {
+      router.push("/admin/dashboard");
+    }
+  },);
+
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true); // Start loading
-
-    useEffect(() => {
-        if (isAdminAuthenticated()) {
-          router.push("/admin/dashboard");
-        }
-      },);
-
     try {
       const res = await fetch("/api/login", {
         method: "POST",
