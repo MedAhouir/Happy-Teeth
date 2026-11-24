@@ -1,39 +1,63 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
-import Admin from "../../../lib/models/Admin";
-import { connectToDB } from "../../../lib/db";
+import { connectToDB } from "@/lib/db";
+import Admin from "@/lib/models/Admin";
+import { adminSchema } from "@/lib/validation";
+import { SESSION_COOKIE, verifySession } from "@/lib/session";
+import { json, sameOrigin } from "@/lib/api";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
-export async function POST(req: NextRequest) {
-  if (req.method !== "POST") {
-    return NextResponse.json({ success: false, message: "Method Not Allowed" }, { status: 405 });
+const isProd = process.env.NODE_ENV === "production";
+
+/** Tells the setup screen whether the very first admin still has to be created. */
+export async function GET() {
+  try {
+    await connectToDB();
+    const needsSetup = (await Admin.estimatedDocumentCount()) === 0;
+    return json({ needsSetup, requiresKey: isProd || Boolean(process.env.ADMIN_SETUP_KEY) });
+  } catch {
+    return json({ needsSetup: false, requiresKey: true });
   }
+}
+
+/**
+ * Create an admin.
+ * - Signed-in admins can add teammates.
+ * - The first admin can be created once, with ADMIN_SETUP_KEY (required in production).
+ * Previously this endpoint was open to anyone.
+ */
+export async function POST(req: NextRequest) {
+  if (!sameOrigin(req)) return json({ message: "Request blocked." }, 403);
+  const limit = rateLimit(`admin:${clientIp(req)}`, 10, 60 * 60 * 1000);
+  if (!limit.ok) return json({ message: "Too many attempts. Try again later." }, 429);
+
+  const parsed = adminSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) {
+    return json({ message: parsed.error.issues[0]?.message ?? "Check the form and try again." }, 400);
+  }
+  const { email, password, setupKey } = parsed.data;
 
   try {
-    const { email, password } = await req.json(); // Parse the incoming JSON data
-
-    if (!email || !password) {
-      return NextResponse.json({ success: false, message: "Email and password are required" }, { status: 400 });
-    }
-
     await connectToDB();
+    const session = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
 
-    // Check if admin already exists
-    const existingAdmin = await Admin.findOne({ email });
-    if (existingAdmin) {
-      return NextResponse.json({ success: false, message: "Admin already exists" }, { status: 409 });
+    if (!session) {
+      const isFirst = (await Admin.estimatedDocumentCount()) === 0;
+      if (!isFirst) return json({ message: "Sign in to add team members." }, 401);
+
+      const expected = process.env.ADMIN_SETUP_KEY;
+      if (isProd && !expected) {
+        return json({ message: "Setup is disabled. Run `npm run seed:admin` on the server instead." }, 403);
+      }
+      if (expected && setupKey !== expected) return json({ message: "Setup key is incorrect." }, 403);
     }
 
-    // Hash password before saving
-    const hashedPassword = await bcrypt.hash(password, 10);
+    if (await Admin.exists({ email })) return json({ message: "An admin with this email already exists." }, 409);
 
-    // Create new admin document
-    const newAdmin = new Admin({ email, password: hashedPassword });
-    await newAdmin.save();
-
-    return NextResponse.json({ success: true, message: "Admin created successfully" }, { status: 201 });
-
+    await Admin.create({ email, password: await bcrypt.hash(password, 12) });
+    return json({ message: "Admin created." }, 201);
   } catch (error) {
-    console.error("Error creating admin:", error);
-    return NextResponse.json({ success: false, message: "Internal Server Error" }, { status: 500 });
+    console.error("Create admin failed:", error);
+    return json({ message: "Something went wrong. Please try again." }, 500);
   }
 }

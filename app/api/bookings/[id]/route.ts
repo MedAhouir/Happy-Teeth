@@ -1,43 +1,50 @@
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
+import mongoose from "mongoose";
 import { connectToDB } from "@/lib/db";
 import Booking from "@/lib/models/Booking";
+import { statusSchema } from "@/lib/validation";
+import { isResponse, json, requireAdmin, sameOrigin } from "@/lib/api";
 
-// Corrected function signature
-export async function PATCH(
-  req: NextRequest,
-  context: { params?: { id?: string } } // Ensure `params` exists to prevent type errors
-) {
+type Ctx = { params: Promise<{ id: string }> };
+
+async function guard(req: NextRequest, ctx: Ctx) {
+  if (!sameOrigin(req)) return { error: json({ error: "Request blocked." }, 403) };
+  const session = await requireAdmin(req);
+  if (isResponse(session)) return { error: session };
+  const { id } = await ctx.params;
+  if (!mongoose.isValidObjectId(id)) return { error: json({ error: "Invalid appointment id." }, 400) };
+  return { id };
+}
+
+export async function PATCH(req: NextRequest, ctx: Ctx) {
+  const g = await guard(req, ctx);
+  if ("error" in g) return g.error;
+
+  const parsed = statusSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return json({ error: "Status must be Pending, Confirmed or Cancelled." }, 400);
+
   try {
     await connectToDB();
-    const { status } = await req.json();
-
-    // Validate required fields
-    if (!status) {
-      return NextResponse.json({ error: "Status is required" }, { status: 400 });
-    }
-
-    // Validate ID existence
-    if (!context.params?.id) {
-      return NextResponse.json({ error: "Booking ID is required" }, { status: 400 });
-    }
-
-    // Update booking in MongoDB
-    const updatedBooking = await Booking.findByIdAndUpdate(
-      context.params.id,
-      { status },
-      { new: true }
-    );
-
-    if (!updatedBooking) {
-      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({
-      message: "Booking updated successfully",
-      booking: updatedBooking,
-    });
+    const booking = await Booking.findByIdAndUpdate(g.id, { status: parsed.data.status }, { new: true }).lean();
+    if (!booking) return json({ error: "Appointment not found." }, 404);
+    return json({ booking });
   } catch (error) {
-    console.error("Update Booking Error:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("Booking update failed:", error);
+    return json({ error: "Could not update the appointment." }, 500);
+  }
+}
+
+export async function DELETE(req: NextRequest, ctx: Ctx) {
+  const g = await guard(req, ctx);
+  if ("error" in g) return g.error;
+
+  try {
+    await connectToDB();
+    const removed = await Booking.findByIdAndDelete(g.id).lean();
+    if (!removed) return json({ error: "Appointment not found." }, 404);
+    return json({ ok: true });
+  } catch (error) {
+    console.error("Booking delete failed:", error);
+    return json({ error: "Could not delete the appointment." }, 500);
   }
 }

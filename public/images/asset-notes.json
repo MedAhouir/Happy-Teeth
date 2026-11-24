@@ -1,0 +1,15 @@
+{
+  "tool": "Built-in image_gen",
+  "assets": [
+    {
+      "path": "public/images/smile-editorial.webp",
+      "description": "Generated fictional editorial portrait; not a patient or treatment outcome.",
+      "prompt": "Use case: photorealistic-natural. Asset type: luxury dental care website hero photograph. Create a premium editorial beauty portrait of a fictional adult woman around 30, olive skin with real natural texture, dark brown hair pulled loosely back, warm brown eyes, relaxed confident authentic open smile showing healthy natural teeth, not over-whitened. Head and upper shoulders, wearing understated ivory linen, no jewelry except tiny gold stud. Soft warm window daylight across the face with gentle sculpted shadows, muted warm ivory background, refined quiet luxury fashion magazine photography, 85mm lens, fine film grain, lifelike not airbrushed. Portrait vertical composition, face centered horizontally and upper-middle vertically, leave comfortable headroom for arched crop and bottom space for website overlay. Palette warm ivory, understated forest green shadow tones, champagne. No text, no watermark, no logo, no dental equipment, no before and after, no borders. Render portrait 1024x1536."
+    },
+    {
+      "path": "public/images/clinic-interior.webp",
+      "description": "Generated architectural concept; not a photograph of the actual clinic.",
+      "prompt": "Use case: photorealistic-natural. Asset type: supporting editorial interior concept for luxury dental clinic website, not a photograph of an existing business. Create a photorealistic architectural visualization of a serene boutique dental consultation suite, warm ivory limewash walls, sculpted arched doorway at back, a single modern cream upholstered dental treatment chair and discreet clean modern dental task light beside it, elegant oak cabinetry, honed travertine countertop, one small vase with olive branches, floor-to-ceiling sheer curtains over a tall window on the left, soft afternoon sunlight and long gentle shadows, a restrained dark forest green accent on rear cabinetry and brushed champagne hardware. Boutique hospitality quality, comfortable sophisticated uncluttered, credible dental equipment with realistic proportions, no people. Vertical 4:5 composition, architectural magazine photography, eye level, detailed natural textures, warm cream tones matching a quiet luxury beauty editorial. No text, logos, watermarks, signage, graphic borders. Render portrait 1024x1280."
+    }
+  ]
+}

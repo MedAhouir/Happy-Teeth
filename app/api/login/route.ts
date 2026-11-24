@@ -1,39 +1,41 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { connectToDB } from "../../../lib/db"; // Import DB connection logic
-import Admin from "../../../lib/models/Admin"; // Admin model
+import { connectToDB } from "@/lib/db";
+import Admin from "@/lib/models/Admin";
+import { loginSchema } from "@/lib/validation";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { cookieOptions, SESSION_COOKIE, signSession } from "@/lib/session";
+import { json, sameOrigin } from "@/lib/api";
 
-// Ensure JWT_SECRET and JWT_EXPIRES_IN are defined in your environment variables
-const JWT_SECRET = process.env.JWT_SECRET as string; ;
+// Compared against when the email is unknown, so timing doesn't reveal which emails exist.
+const DUMMY_HASH = "$2a$10$CwTycUXWue0Thq9StjUM0uJ8.6Hq8mGv0mYbQ0kYb6bQ3oQ1m5Z6e";
+const BAD_LOGIN = "Incorrect email or password.";
 
-// If JWT_SECRET is not defined, throw an error
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET is not defined in the environment variables");
-}
-
-// Named export for POST method
 export async function POST(req: NextRequest) {
+  if (!sameOrigin(req)) return json({ message: "Request blocked." }, 403);
+
+  const limit = rateLimit(`login:${clientIp(req)}`, 8, 10 * 60 * 1000);
+  if (!limit.ok) {
+    return json({ message: "Too many attempts. Try again in a few minutes." }, 429, {
+      "Retry-After": String(limit.retryAfter),
+    });
+  }
+
+  const parsed = loginSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return json({ message: BAD_LOGIN }, 401);
+
   try {
-    const { email, password } = await req.json();
     await connectToDB();
+    const admin = await Admin.findOne({ email: parsed.data.email });
+    const ok = await bcrypt.compare(parsed.data.password, admin?.password ?? DUMMY_HASH);
+    if (!admin || !ok) return json({ message: BAD_LOGIN }, 401);
 
-    const admin = await Admin.findOne({ email });
-    if (!admin) {
-      return NextResponse.json({ message: "Admin not found" }, { status: 404 });
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, admin.password);
-    if (!isPasswordValid) {
-      return NextResponse.json({ message: "Email or password is incorrect" }, { status: 401 });
-    }
-
-    const token = jwt.sign({ id: admin._id }, JWT_SECRET, { expiresIn: "1d" });
-
-    return NextResponse.json({ message: "Admin logged in successfully", token }, { status: 200 });
+    const token = await signSession({ sub: String(admin._id), email: admin.email });
+    const res = json({ message: "Signed in." });
+    res.cookies.set(SESSION_COOKIE, token, cookieOptions);
+    return res;
   } catch (error) {
-    console.error("Error during login:", error);
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
+    console.error("Login failed:", error);
+    return json({ message: "Something went wrong. Please try again." }, 500);
   }
 }
-
